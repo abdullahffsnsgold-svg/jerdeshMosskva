@@ -1,0 +1,194 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Стилизация инпута телефона через глобальные классы библиотеки */
+.custom-phone-wrapper {
+  width: 100% !important;
+  max-width: 360px !important;
+  height: 44px !important;
+  display: flex;
+  align-items: center;
+  border: 1px solid #E5E5EA;
+  border-radius: 9999px;
+  background-color: #ffffff;
+  padding: 0 4px;
+  transition: border-color 0.2s ease;
+}
+
+.custom-phone-wrapper:focus-within {
+  border-color: #4343D9;
+}
+
+.custom-phone-wrapper .react-international-phone-input-container {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 100% !important;
+}
+
+.custom-phone-wrapper .react-international-phone-input {
+  border: none !important;
+  background: transparent !important;
+  width: 100% !important;
+  height: 100% !important;
+  font-size: 15px !important;
+  outline: none !important;
+  padding-left: 8px !important;
+  color: #1F1F1F !important;
+}
+
+.custom-phone-wrapper .react-international-phone-country-selector-button {
+  border: none !important;
+  background: transparent !important;
+  padding-left: 12px !important;
+  height: 100% !important;
+}
+
+/* Скрываем скроллбар в ленте сторис */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Базовые стрелки Swiper */
+.swiper-button-next,
+.swiper-button-prev {
+  color: white !important;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 30px;
+  border-radius: 50%;
+  backdrop-filter: blur(5px);
+}
+
+.swiper-button-next::after,
+.swiper-button-prev::after {
+  font-size: 20px !important;
+  font-weight: bold;
+}
+
+/* Аккуратные стрелки внутри модалки сторис */
+.stories-swiper .swiper-button-next,
+.stories-swiper .swiper-button-prev {
+  color: white !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 50% !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1) !important;
+  z-index: 120;
+}
+
+/* Позиционируем кнопки чуть шире самой сторис */
+.stories-swiper .swiper-button-prev {
+  left: 20px !important;
+}
+
+.stories-swiper .swiper-button-next {
+  right: 20px !important;
+}
+
+.stories-swiper .swiper-button-next:hover,
+.stories-swiper .swiper-button-prev:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+  transform: scale(1.1);
+}
+
+/* Размер самих стрелочек внутри круга */
+.stories-swiper .swiper-button-next::after,
+.stories-swiper .swiper-button-prev::after {
+  font-size: 18px !important;
+  font-weight: 800;
+}
+
+/* Если экран маленький — прячем боковые кнопки, оставляем только свайп */
+@media (max-width: 1024px) {
+
+  .stories-swiper .swiper-button-next,
+  .stories-swiper .swiper-button-prev {
+    display: none !important;
+  }
+}
+
+/* Отключаем резкие рывки */
+.stories-swiper .swiper-wrapper {
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+/* Убираем стандартные тени Swiper, которые мешают */
+.swiper-slide-shadow-left,
+.swiper-slide-shadow-right {
+  display: none !important;
+}
+
+.swiper-slide {
+  will-change: transform, opacity;
+  /* Это подсказка браузеру: "эти элементы будут двигаться" */
+  backface-visibility: hidden;
+  /* Убирает мерцание при анимации */
+}
+
+/* Дополнительная защита текста */
+.swiper-slide .bg-gradient-to-t {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #EFEFEF 25%, #F8F8F8 50%, #EFEFEF 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 1.5s ease-out forwards;
+}

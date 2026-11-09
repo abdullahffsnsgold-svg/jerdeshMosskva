@@ -149,10 +149,14 @@ export default function CreateAdPage() {
                                 </button>
                             </Link>
 
-                            <button className="hidden items-center gap-1.5 rounded-full border border-[#FFD214] px-5 py-2.5 text-sm font-medium text-[#FFD214] transition-colors hover:bg-[#FFD214]/5 sm:flex">
+                            <Link
+                                href="/favorites"
+                                aria-label="Избранные"
+                                className="flex items-center gap-1.5 rounded-full border border-[#FFD214] px-3 py-2.5 text-sm font-medium text-[#FFD214] transition-colors hover:bg-[#FFD214]/5 sm:px-5"
+                            >
                                 <Heart className="h-4 w-4 fill-none" />
-                                Избранные
-                            </button>
+                                <span className="hidden sm:inline">Избранные</span>
+                            </Link>
 
                             <button onClick={() => setIsAuthOpen(true)} className="flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50">
                                 Войти

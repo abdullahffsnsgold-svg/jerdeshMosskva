@@ -18,6 +18,8 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import AuthModal from '@/app/components/AuthModal';
 import PageNav from '@/app/components/PageNav';
+import { checkIsAuth } from '@/lib/auth';
+import { toggleFavorite, useFavoriteIds } from '@/lib/favorites';
 
 interface Product {
   id: string | number;
@@ -58,6 +60,21 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true);
   const [isCommentSending, setIsCommentSending] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const favoriteIds = useFavoriteIds();
+
+  useEffect(() => {
+    const handleAuthChange = () => setIsLoggedIn(checkIsAuth());
+
+    handleAuthChange();
+    window.addEventListener('storage', handleAuthChange);
+    window.addEventListener('authChange', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('storage', handleAuthChange);
+      window.removeEventListener('authChange', handleAuthChange);
+    };
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -88,6 +105,13 @@ export default function ProductPage() {
   }, [id]);
 
   const handleAddComment = async () => {
+    // Комментарии доступны только вошедшим пользователям
+    if (!isLoggedIn) {
+      toast.info('Войдите, чтобы оставить комментарий');
+      setIsAuthOpen(true);
+      return;
+    }
+
     const text = commentText.trim();
     if (!text || isCommentSending) return;
 
@@ -95,7 +119,11 @@ export default function ProductPage() {
 
     const { data, error } = await supabase
       .from('comments')
-      .insert({ product_id: id, text, username: 'Гость' })
+      .insert({
+        product_id: id,
+        text,
+        username: localStorage.getItem('userPhone') || 'Пользователь',
+      })
       .select()
       .single();
 
@@ -142,9 +170,14 @@ export default function ProductPage() {
                 <span className="sm:hidden">Опубликовать</span>
               </button>
             </Link>
-            <button className="hidden items-center gap-1.5 rounded-full border border-[#FFD214] px-5 py-2.5 text-sm font-medium text-[#FFD214] transition-colors hover:bg-[#FFD214]/5 sm:flex">
-              <Heart className="h-4 w-4 fill-none" /> Избранные
-            </button>
+            <Link
+              href="/favorites"
+              aria-label="Избранные"
+              className="flex items-center gap-1.5 rounded-full border border-[#FFD214] px-3 py-2.5 text-sm font-medium text-[#FFD214] transition-colors hover:bg-[#FFD214]/5 sm:px-5"
+            >
+              <Heart className="h-4 w-4 fill-none" />
+              <span className="hidden sm:inline">Избранные</span>
+            </Link>
             <button onClick={() => setIsAuthOpen(true)} className="flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50">
               Войти
               <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-400">
@@ -179,7 +212,21 @@ export default function ProductPage() {
         ) : (
           /* Твой оригинальный контент с анимацией */
           <div className="fade-in">
-            <h1 className="mb-3 text-2xl font-bold leading-tight sm:text-3xl lg:text-[42px] lg:leading-[50px]">{product.title}</h1>
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <h1 className="text-2xl font-bold leading-tight sm:text-3xl lg:text-[42px] lg:leading-[50px]">{product.title}</h1>
+              <button
+                type="button"
+                onClick={() => toggleFavorite(Number(product.id))}
+                aria-label={favoriteIds.includes(Number(product.id)) ? 'Убрать из избранного' : 'Добавить в избранное'}
+                aria-pressed={favoriteIds.includes(Number(product.id))}
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors ${favoriteIds.includes(Number(product.id))
+                  ? 'border-red-200 bg-red-50 text-red-500'
+                  : 'border-gray-200 bg-white text-gray-400 hover:text-red-500'
+                  }`}
+              >
+                <Heart size={20} fill={favoriteIds.includes(Number(product.id)) ? 'currentColor' : 'none'} />
+              </button>
+            </div>
             <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] text-[#707070] sm:gap-6 sm:text-[14px]">
               <span className="flex items-center gap-1"><MapPin size={16} /> {product.location || 'Не указано'}</span>
               <span className="flex items-center gap-1"><Eye size={16} /> {product.views || 0} просмотров</span>
@@ -232,8 +279,23 @@ export default function ProductPage() {
             <section className="mt-12 max-w-[1034px]">
               <h2 className="mb-6 text-2xl font-bold sm:text-[32px]">Комментарии ({comments.length})</h2>
               <div className="w-full h-[54px] rounded-full bg-[#EFEFEF] px-6 flex items-center mb-10">
-                <input value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Написать комментарий" className="bg-transparent outline-none flex-1 text-[15px]" />
-                <button onClick={handleAddComment} disabled={isCommentSending} className="w-[34px] h-[34px] rounded-full bg-[#5B5BFF] text-white flex items-center justify-center disabled:opacity-50">↑</button>
+                {isLoggedIn ? (
+                  <input
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    placeholder="Написать комментарий"
+                    className="bg-transparent outline-none flex-1 text-[15px]"
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsAuthOpen(true)}
+                    className="flex-1 truncate text-left text-[15px] text-gray-500"
+                  >
+                    Войдите, чтобы оставить комментарий
+                  </button>
+                )}
+                <button onClick={handleAddComment} disabled={isCommentSending} aria-label="Отправить комментарий" className="w-[34px] h-[34px] rounded-full bg-[#5B5BFF] text-white flex items-center justify-center disabled:opacity-50">↑</button>
               </div>
               <div className="space-y-4">
                 {comments.map((c) => (

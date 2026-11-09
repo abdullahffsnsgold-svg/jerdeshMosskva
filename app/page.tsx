@@ -128,10 +128,14 @@ export default function Home() {
               <span className="sm:hidden">Опубликовать</span>
             </button>
 
-            <button className="hidden items-center gap-1.5 rounded-full border border-[#FFD214] px-5 py-2.5 text-sm font-medium text-[#FFD214] transition-colors hover:bg-[#FFD214]/5 sm:flex">
+            <Link
+              href="/favorites"
+              aria-label="Избранные"
+              className="flex items-center gap-1.5 rounded-full border border-[#FFD214] px-3 py-2.5 text-sm font-medium text-[#FFD214] transition-colors hover:bg-[#FFD214]/5 sm:px-5"
+            >
               <Heart className="h-4 w-4 fill-none" />
-              Избранные
-            </button>
+              <span className="hidden sm:inline">Избранные</span>
+            </Link>
             {isLoggedIn ? (
               <button
                 onClick={() => {

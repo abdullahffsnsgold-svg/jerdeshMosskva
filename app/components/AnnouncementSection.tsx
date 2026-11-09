@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { Heart } from 'lucide-react';
 import Link from 'next/link';
 import Pagination from './Pagination';
+import { toggleFavorite, useFavoriteIds } from '@/lib/favorites';
 
 interface Product {
   id: string | number;
@@ -25,6 +26,7 @@ export default function AnnouncementSection({ categoryId = null }: AnnouncementS
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  const favoriteIds = useFavoriteIds();
 
   useEffect(() => {
     let cancelled = false;
@@ -74,9 +76,9 @@ export default function AnnouncementSection({ categoryId = null }: AnnouncementS
       {/* Сетка с карточками */}
       <div className="grid grid-cols-1 justify-items-center gap-4 sm:gap-6 lg:grid-cols-2">
         {products.map((item, index) => (
-          <Link href={`/product/${item.id}`} key={item.id} className="w-full max-w-[496px]">
-            <ProductCard product={item} index={index} />
-          </Link>
+          <div key={item.id} className="w-full max-w-[496px]">
+            <ProductCard product={item} index={index} isFavorite={favoriteIds.includes(Number(item.id))} />
+          </div>
         ))}
       </div>
 
@@ -101,7 +103,15 @@ export default function AnnouncementSection({ categoryId = null }: AnnouncementS
   );
 }
 
-function ProductCard({ product, index }: { product: Product; index: number }) {
+function ProductCard({
+  product,
+  index,
+  isFavorite,
+}: {
+  product: Product;
+  index: number;
+  isFavorite: boolean;
+}) {
   const hoverStyles = index % 2 === 0
     ? 'hover:shadow-blue-500/20 hover:border-blue-300'
     : 'hover:shadow-pink-500/20 hover:border-pink-300';
@@ -111,24 +121,27 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
       className={`flex w-full gap-3 rounded-3xl border-2 border-transparent bg-white p-3 shadow-sm transition-all duration-300 hover:shadow-2xl sm:h-[172px] sm:gap-4 sm:p-4 ${hoverStyles}`}
     >
       {/* Картинка: на мобильных меньше, на десктопе 140x140 */}
-      <div className="h-[96px] w-[96px] shrink-0 overflow-hidden rounded-2xl bg-gray-100 sm:h-[140px] sm:w-[140px]">
+      <Link
+        href={`/product/${product.id}`}
+        className="h-[96px] w-[96px] shrink-0 overflow-hidden rounded-2xl bg-gray-100 sm:h-[140px] sm:w-[140px]"
+      >
         {product.image_url ? (
           <img src={product.image_url} className="h-full w-full object-cover" alt={product.title || 'Фото объявления'} />
         ) : (
-          <div className="flex h-full items-center justify-center text-xs text-gray-400">Нет фото</div>
+          <span className="flex h-full items-center justify-center text-xs text-gray-400">Нет фото</span>
         )}
-      </div>
+      </Link>
 
       {/* Контент */}
       <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5 sm:py-1">
-        <div className="min-w-0">
+        <Link href={`/product/${product.id}`} className="min-w-0">
           <h3 className="truncate text-base font-bold leading-tight text-gray-900 sm:text-lg">
             {product.title}
           </h3>
           <p className="mt-1 line-clamp-2 text-xs text-gray-500 sm:text-sm">
             {product.description}
           </p>
-        </div>
+        </Link>
 
         {/* АВТОР И КНОПКА */}
         <div className="mt-2 flex items-center justify-between gap-2">
@@ -142,10 +155,15 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
           </div>
           <button
             type="button"
-            aria-label="В избранное"
-            className="shrink-0 text-gray-300 transition hover:text-red-500"
+            aria-label={isFavorite ? 'Убрать из избранного' : 'В избранное'}
+            aria-pressed={isFavorite}
+            onClick={() => toggleFavorite(Number(product.id))}
+            className={`shrink-0 transition ${isFavorite
+              ? 'text-red-500 hover:text-red-600'
+              : 'text-gray-300 hover:text-red-500'
+              }`}
           >
-            <Heart size={20} fill="currentColor" />
+            <Heart size={20} fill={isFavorite ? 'currentColor' : 'none'} />
           </button>
         </div>
       </div>

@@ -150,7 +150,8 @@ export default function ForgotPasswordModal({ isOpen, onClose, onSwitchToLogin }
         setStep('otp');
         setTimer(60);
       } else {
-        alert('Не удалось отправить код восстановления.');
+        const data = await response.json().catch(() => null);
+        setGeneralError(data?.message ?? 'Не удалось отправить код восстановления.');
       }
     } catch (error) {
       console.error(error);

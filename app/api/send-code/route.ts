@@ -13,7 +13,6 @@ import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
-const PHONE_RE = /^\+\d{10,15}$/;
 const CODE_RE = /^\d{6}$/;
 
 /** Не больше 3 отправок на номер за минуту. */
@@ -129,12 +128,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: 'bad_json' }, { status: 400 });
   }
 
-  const phone = typeof payload.phone === 'string' ? payload.phone.trim() : '';
+  // Клиент присылает номер без плюса ("996555123456"), поэтому приводим к E.164 сами
+  const digits = typeof payload.phone === 'string' ? payload.phone.replace(/\D/g, '') : '';
   const incomingCode = typeof payload.code === 'string' ? payload.code.trim() : '';
 
-  if (!PHONE_RE.test(phone)) {
-    return NextResponse.json({ ok: false, error: 'bad_phone' }, { status: 400 });
+  if (digits.length < 10 || digits.length > 15) {
+    return NextResponse.json(
+      { ok: false, error: 'bad_phone', message: 'Некорректный номер телефона.' },
+      { status: 400 },
+    );
   }
+
+  const phone = `+${digits}`;
 
   if (incomingCode && !CODE_RE.test(incomingCode)) {
     return NextResponse.json({ ok: false, error: 'bad_code' }, { status: 400 });

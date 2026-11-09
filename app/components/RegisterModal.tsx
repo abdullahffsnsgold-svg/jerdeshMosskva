@@ -171,7 +171,9 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
                 setTimer(60);
                 setAttempt(1);
             } else {
-                setGeneralError('Не удалось отправить SMS с кодом.');
+                // Показываем причину от сервера: «провайдер не настроен», «слишком часто» и т.п.
+                const data = await response.json().catch(() => null);
+                setGeneralError(data?.message ?? 'Не удалось отправить SMS с кодом.');
             }
         } catch (error) {
             console.error(error);
@@ -205,6 +207,9 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
                     setTimer(900);
                     setAttempt(3);
                 }
+            } else {
+                const data = await response.json().catch(() => null);
+                setGeneralError(data?.message ?? 'Не удалось отправить SMS с кодом.');
             }
         } catch (error) {
             console.error(error);

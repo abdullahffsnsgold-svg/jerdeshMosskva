@@ -171,7 +171,7 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
                 setTimer(60);
                 setAttempt(1);
             } else {
-                setGeneralError('Ошибка сервера при отправке WhatsApp кода.');
+                setGeneralError('Не удалось отправить SMS с кодом.');
             }
         } catch (error) {
             console.error(error);
@@ -381,13 +381,13 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
                             {/* ШАГ 2: ПОДТВЕРЖДЕНИЕ В WHATSAPP */}
                             {regStep === 'ask-whatsapp' && (
                                 <motion.div key="ask" variants={stepVariants} initial="initial" animate="animate" exit="exit" className="w-full h-full flex flex-col items-center justify-between py-4">
-                                    <div className="w-16 h-16 bg-[#25D366]/10 text-[#25D366] rounded-full flex items-center justify-center text-[32px] mt-4">💬</div>
+                                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#4343D9]/10 text-[32px] text-[#4343D9]">✉️</div>
                                     <div className="text-center px-4">
                                         <h3 className="text-[24px] font-bold text-[#1F1F1F]">Получить код?</h3>
-                                        <p className="text-[14px] text-[#8E8E93] mt-2 leading-relaxed">Мы отправим проверочный код на WhatsApp номер: <br /><strong className="text-[#1F1F1F]">{phone}</strong></p>
+                                        <p className="text-[14px] text-[#8E8E93] mt-2 leading-relaxed">Мы отправим проверочный код по SMS на номер: <br /><strong className="text-[#1F1F1F]">{phone}</strong></p>
                                     </div>
                                     <div className="flex flex-col gap-2 w-full items-center">
-                                        <button type="button" disabled={loading} onClick={handleSendWhatsAppCode} style={{ width: '100%', maxWidth: '360px', height: '44px' }} className="text-white font-medium text-[15px] rounded-full bg-[#25D366] hover:bg-[#20ba59] active:scale-[0.98] transition-all flex items-center justify-center shadow-md">
+                                        <button type="button" disabled={loading} onClick={handleSendWhatsAppCode} style={{ width: '100%', maxWidth: '360px', height: '44px' }} className="text-white font-medium text-[15px] rounded-full bg-[#4343D9] hover:bg-[#3232B8] active:scale-[0.98] transition-all flex items-center justify-center shadow-md">
                                             {loading ? <Spinner /> : 'Да, отправить код'}
                                         </button>
                                         <button type="button" onClick={() => setRegStep('phone')} className="text-[13px] text-[#8E8E93] hover:text-[#1F1F1F] py-1">Изменить номер</button>
@@ -399,7 +399,7 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
                             {regStep === 'otp' && (
                                 <motion.div key="otp" variants={stepVariants} initial="initial" animate="animate" exit="exit" className="w-full h-full flex flex-col items-center justify-between">
                                     <div className="text-center mt-2">
-                                        <h2 className="text-[32px] font-bold text-[#1F1F1F] leading-tight">Код из WhatsApp</h2>
+                                        <h2 className="text-[32px] font-bold text-[#1F1F1F] leading-tight">Код из SMS</h2>
                                         <p className="text-[14px] text-[#8E8E93] mt-1">Введите 6 цифр, отправленных на {phone}</p>
                                     </div>
 

@@ -20,6 +20,33 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Отправка кодов на номер (SMS)
+
+Коды регистрации и сброса пароля отправляет серверный маршрут `POST /api/send-code`.
+Провайдер выбирается по переменным окружения:
+
+**Twilio**
+
+```env
+TWILIO_ACCOUNT_SID=...
+TWILIO_AUTH_TOKEN=...
+TWILIO_FROM=+1............
+```
+
+**Vonage**
+
+```env
+VONAGE_API_KEY=...
+VONAGE_API_SECRET=...
+SMS_SENDER_ID=Jerdesh
+```
+
+Если ключей нет, в режиме разработки код печатается в консоль сервера, а в production
+маршрут отвечает `503` — значит, провайдер не настроен.
+
+Маршрут принимает `{ "phone": "+79991234567", "code": "123456" }`, проверяет формат
+и ограничивает отправку тремя запросами на номер в минуту.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

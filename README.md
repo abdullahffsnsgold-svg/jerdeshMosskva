@@ -20,9 +20,46 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Отправка кодов на номер (SMS)
+## Отправка кодов на номер
 
 Коды регистрации и сброса пароля отправляет серверный маршрут `POST /api/send-code`.
+Порядок выбора канала:
+
+1. `WHATSAPP_GATEWAY_URL` + `WHATSAPP_GATEWAY_SECRET` — свой WhatsApp-шлюз;
+2. Twilio или Vonage — SMS;
+3. без настроек — в режиме разработки код печатается в консоль, в production ответ `503`.
+
+### WhatsApp-шлюз (`whatsapp-server/`)
+
+Отдельный процесс, который держит сессию WhatsApp и отправляет сообщения.
+На Vercel его запустить нельзя (нужны постоянный процесс и диск) — подойдёт VPS,
+Render или Railway с постоянным диском.
+
+```bash
+cd whatsapp-server
+npm install
+WHATSAPP_API_SECRET=длинная-строка npm start
+```
+
+В консоли появится QR-код: откройте WhatsApp → Связанные устройства → Связать
+устройство. Сессия сохраняется в `whatsapp-server/auth/` и переживает перезапуск.
+
+Затем укажите в окружении сайта (и в Vercel) адрес шлюза и тот же секрет:
+
+```env
+WHATSAPP_GATEWAY_URL=https://шлюз.example.com
+WHATSAPP_GATEWAY_SECRET=длинная-строка
+```
+
+Проверка: `GET /health` отдаёт `{ ok, ready }`, а отправка требует заголовок
+`x-api-secret` и тело `{ "phone": "996555000111", "code": "123456" }`.
+
+Шлюз использует неофициальный протокол WhatsApp Web (Baileys): это бесплатно, но
+номер может быть заблокирован, если писать незнакомым людям массово. Для
+официальной схемы нужен WhatsApp Cloud API с шаблоном сообщения.
+
+### SMS-провайдеры
+
 Провайдер выбирается по переменным окружения:
 
 **Twilio**
@@ -44,8 +81,8 @@ SMS_SENDER_ID=Jerdesh
 Если ключей нет, в режиме разработки код печатается в консоль сервера, а в production
 маршрут отвечает `503` — значит, провайдер не настроен.
 
-Маршрут принимает `{ "phone": "+79991234567", "code": "123456" }`, проверяет формат
-и ограничивает отправку тремя запросами на номер в минуту.
+Маршрут принимает номер с плюсом или без (`"+79991234567"` и `"996555000111"`),
+проверяет формат и ограничивает отправку тремя запросами на номер в минуту.
 
 ## Learn More
 

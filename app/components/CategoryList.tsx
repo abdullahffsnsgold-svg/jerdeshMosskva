@@ -34,7 +34,7 @@ export default function CategoryList({ categories, activeCategoryId, onSelectCat
           type="button"
           onClick={() => onSelectCategory(null)}
           aria-pressed={activeCategoryId === null}
-          className={`flex shrink-0 items-center gap-2 transition-opacity hover:opacity-80 ${
+          className={`flex min-h-[44px] shrink-0 items-center gap-2 transition-opacity hover:opacity-80 ${
             activeCategoryId === null ? 'opacity-100' : 'opacity-60'
           }`}
         >
@@ -59,7 +59,7 @@ export default function CategoryList({ categories, activeCategoryId, onSelectCat
               key={cat.id}
               onClick={() => onSelectCategory(isActive ? null : cat.id)}
               aria-pressed={isActive}
-              className={`flex shrink-0 items-center gap-2 whitespace-nowrap transition-opacity hover:opacity-80 ${
+              className={`flex min-h-[44px] shrink-0 items-center gap-2 whitespace-nowrap transition-opacity hover:opacity-80 ${
                 isActive ? 'opacity-100' : 'opacity-70'
               }`}
             >

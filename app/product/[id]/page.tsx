@@ -164,7 +164,7 @@ export default function ProductPage() {
           </div>
           <div className="flex items-center gap-2 sm:gap-4">
             <Link href="/create-ad">
-              <button className="flex items-center gap-1.5 rounded-full bg-[#3B51D5] px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-[#2B41B7] sm:px-5 sm:py-2.5 sm:text-sm">
+              <button className="flex min-h-[44px] items-center gap-1.5 rounded-full bg-[#3B51D5] px-3 py-2.5 text-xs font-medium text-white transition-colors hover:bg-[#2B41B7] sm:px-5 sm:text-sm">
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">Опубликовать объявление</span>
                 <span className="sm:hidden">Опубликовать</span>
@@ -173,12 +173,12 @@ export default function ProductPage() {
             <Link
               href="/favorites"
               aria-label="Избранные"
-              className="flex items-center gap-1.5 rounded-full border border-[#FFD214] px-3 py-2.5 text-sm font-medium text-[#FFD214] transition-colors hover:bg-[#FFD214]/5 sm:px-5"
+              className="flex min-h-[44px] items-center gap-1.5 rounded-full border border-[#FFD214] px-3 py-2.5 text-sm font-medium text-[#FFD214] transition-colors hover:bg-[#FFD214]/5 sm:px-5"
             >
               <Heart className="h-4 w-4 fill-none" />
               <span className="hidden sm:inline">Избранные</span>
             </Link>
-            <button onClick={() => setIsAuthOpen(true)} className="flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50">
+            <button onClick={() => setIsAuthOpen(true)} className="flex min-h-[44px] items-center gap-2 rounded-full border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50">
               Войти
               <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-400">
                 <User className="h-4 w-4" />
@@ -290,12 +290,12 @@ export default function ProductPage() {
                   <button
                     type="button"
                     onClick={() => setIsAuthOpen(true)}
-                    className="flex-1 truncate text-left text-[15px] text-gray-500"
+                    className="flex min-h-[40px] flex-1 items-center truncate text-left text-[15px] text-gray-500"
                   >
                     Войдите, чтобы оставить комментарий
                   </button>
                 )}
-                <button onClick={handleAddComment} disabled={isCommentSending} aria-label="Отправить комментарий" className="w-[34px] h-[34px] rounded-full bg-[#5B5BFF] text-white flex items-center justify-center disabled:opacity-50">↑</button>
+                <button onClick={handleAddComment} disabled={isCommentSending} aria-label="Отправить комментарий" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#5B5BFF] text-white disabled:opacity-50">↑</button>
               </div>
               <div className="space-y-4">
                 {comments.map((c) => (

@@ -73,7 +73,7 @@ export default function FavoritesPage() {
           </Link>
           <Link
             href="/create-ad"
-            className="flex items-center gap-1.5 rounded-full bg-[#3B51D5] px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-[#2B41B7] sm:px-5 sm:py-2.5 sm:text-sm"
+            className="flex min-h-[44px] items-center gap-1.5 rounded-full bg-[#3B51D5] px-3 py-2.5 text-xs font-medium text-white transition-colors hover:bg-[#2B41B7] sm:px-5 sm:text-sm"
           >
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">Опубликовать объявление</span>

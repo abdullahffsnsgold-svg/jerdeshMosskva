@@ -291,7 +291,7 @@ export default function ForgotPasswordModal({ isOpen, onClose, onSwitchToLogin }
                       <p className="text-[13px] text-[#EA4335] text-center px-4 font-medium">{generalError}</p>
                     )}
 
-                    <button type="submit" disabled={loading} style={{ width: '100%', maxWidth: '360px', height: '40px' }} className="mt-4 text-white font-medium text-[15px] rounded-full bg-[#4343D9] hover:bg-[#3232B8] active:scale-[0.98] transition-all flex items-center justify-center shadow-md">
+                    <button type="submit" disabled={loading} style={{ width: '100%', maxWidth: '360px', height: '44px' }} className="mt-4 text-white font-medium text-[15px] rounded-full bg-[#4343D9] hover:bg-[#3232B8] active:scale-[0.98] transition-all flex items-center justify-center shadow-md">
                       {loading ? <Spinner /> : 'Продолжить'}
                     </button>
 
@@ -346,7 +346,7 @@ export default function ForgotPasswordModal({ isOpen, onClose, onSwitchToLogin }
                       ))}
                     </motion.div>
 
-                    <button type="submit" style={{ width: '100%', maxWidth: '360px', height: '40px' }} className="text-white font-medium text-[15px] rounded-full bg-[#4343D9] hover:bg-[#3232B8] active:scale-[0.98] transition-all">
+                    <button type="submit" style={{ width: '100%', maxWidth: '360px', height: '44px' }} className="text-white font-medium text-[15px] rounded-full bg-[#4343D9] hover:bg-[#3232B8] active:scale-[0.98] transition-all">
                       Проверить код
                     </button>
 
@@ -373,7 +373,7 @@ export default function ForgotPasswordModal({ isOpen, onClose, onSwitchToLogin }
                         placeholder="Новый пароль"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        className={`w-full h-full px-5 pr-12 rounded-full border text-[15px] outline-none focus:border-[#4343D9] transition-all placeholder-[#C7C7CC]
+                        className={`w-full h-full px-5 pr-12 rounded-full border text-base outline-none focus:border-[#4343D9] transition-all placeholder-[#C7C7CC] sm:text-[15px]
                           ${passError ? 'border-[#EA4335] bg-[#FFFBFA] text-[#EA4335]' : 'border-[#E5E5EA] text-[#1F1F1F]'}`}
                       />
                       <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8E8E93] hover:text-[#1F1F1F]">
@@ -387,7 +387,7 @@ export default function ForgotPasswordModal({ isOpen, onClose, onSwitchToLogin }
                         placeholder="Повторите пароль"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className={`w-full h-full px-5 pr-12 rounded-full border text-[15px] outline-none focus:border-[#4343D9] transition-all placeholder-[#C7C7CC]
+                        className={`w-full h-full px-5 pr-12 rounded-full border text-base outline-none focus:border-[#4343D9] transition-all placeholder-[#C7C7CC] sm:text-[15px]
                           ${confirmPassError ? 'border-[#EA4335] bg-[#FFFBFA] text-[#EA4335]' : 'border-[#E5E5EA] text-[#1F1F1F]'}`}
                       />
                       <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8E8E93] hover:text-[#1F1F1F]">
@@ -395,7 +395,7 @@ export default function ForgotPasswordModal({ isOpen, onClose, onSwitchToLogin }
                       </button>
                     </motion.div>
 
-                    <button type="submit" disabled={loading} style={{ width: '100%', maxWidth: '360px', height: '40px' }} className="mt-4 text-white font-medium text-[15px] rounded-full bg-[#4343D9] hover:bg-[#3232B8] active:scale-[0.98] transition-all flex items-center justify-center shadow-md">
+                    <button type="submit" disabled={loading} style={{ width: '100%', maxWidth: '360px', height: '44px' }} className="mt-4 text-white font-medium text-[15px] rounded-full bg-[#4343D9] hover:bg-[#3232B8] active:scale-[0.98] transition-all flex items-center justify-center shadow-md">
                       {loading ? <Spinner /> : 'Сохранить пароль'}
                     </button>
                   </form>

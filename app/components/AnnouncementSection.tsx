@@ -158,7 +158,7 @@ function ProductCard({
             aria-label={isFavorite ? 'Убрать из избранного' : 'В избранное'}
             aria-pressed={isFavorite}
             onClick={() => toggleFavorite(Number(product.id))}
-            className={`shrink-0 transition ${isFavorite
+            className={`-m-2 shrink-0 p-2 transition ${isFavorite
               ? 'text-red-500 hover:text-red-600'
               : 'text-gray-300 hover:text-red-500'
               }`}

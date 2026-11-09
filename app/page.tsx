@@ -121,7 +121,7 @@ export default function Home() {
                   router.push('/create-ad'); // Переходим к созданию
                 }
               }}
-              className="flex items-center gap-1.5 rounded-full bg-[#3B51D5] px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-[#2B41B7] sm:px-5 sm:py-2.5 sm:text-sm"
+              className="flex min-h-[44px] items-center gap-1.5 rounded-full bg-[#3B51D5] px-3 py-2.5 text-xs font-medium text-white transition-colors hover:bg-[#2B41B7] sm:px-5 sm:text-sm"
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">Опубликовать объявление</span>
@@ -131,7 +131,7 @@ export default function Home() {
             <Link
               href="/favorites"
               aria-label="Избранные"
-              className="flex items-center gap-1.5 rounded-full border border-[#FFD214] px-3 py-2.5 text-sm font-medium text-[#FFD214] transition-colors hover:bg-[#FFD214]/5 sm:px-5"
+              className="flex min-h-[44px] items-center gap-1.5 rounded-full border border-[#FFD214] px-3 py-2.5 text-sm font-medium text-[#FFD214] transition-colors hover:bg-[#FFD214]/5 sm:px-5"
             >
               <Heart className="h-4 w-4 fill-none" />
               <span className="hidden sm:inline">Избранные</span>
@@ -143,12 +143,12 @@ export default function Home() {
                   localStorage.removeItem('userPhone');
                   window.dispatchEvent(new Event('authChange')); // Сигнал для выхода
                 }}
-                className="rounded-full border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
+                className="flex min-h-[44px] items-center rounded-full border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
               >
                 Выйти
               </button>
             ) : (
-              <button className="flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50" onClick={() => setIsAuthOpen(true)}>
+              <button className="flex min-h-[44px] items-center gap-2 rounded-full border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50" onClick={() => setIsAuthOpen(true)}>
                 Войти
               </button>
             )}
@@ -205,7 +205,7 @@ export default function Home() {
                         setIsLocationOpen(!isLocationOpen);
                         setIsCategoryOpen(false);
                       }}
-                      className="flex items-center text-gray-500 hover:text-gray-800 transition-colors"
+                      className="flex min-h-[44px] w-full items-center justify-between gap-2 text-gray-500 transition-colors sm:min-h-0 sm:w-auto sm:justify-start sm:hover:text-gray-800"
                     >
                       <span className="text-sm select-none">{selectedLocation}</span>
                       <ChevronDown className={`ml-2 h-4 w-4 transition-transform duration-300 ${isLocationOpen ? 'rotate-180' : ''}`} />
@@ -239,7 +239,7 @@ export default function Home() {
                         setIsCategoryOpen(!isCategoryOpen);
                         setIsLocationOpen(false);
                       }}
-                      className="flex items-center text-gray-500 hover:text-gray-800 transition-colors"
+                      className="flex min-h-[44px] w-full items-center justify-between gap-2 text-gray-500 transition-colors sm:min-h-0 sm:w-auto sm:justify-start sm:hover:text-gray-800"
                     >
                       <span className="text-sm select-none">{activeCategoryName}</span>
                       <ChevronDown className={`ml-2 h-4 w-4 transition-transform duration-300 ${isCategoryOpen ? 'rotate-180' : ''}`} />

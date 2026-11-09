@@ -41,7 +41,7 @@ export default function PageNav({
           type="button"
           onClick={handleBack}
           aria-label={backLabel}
-          className="flex shrink-0 items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 sm:px-4 sm:text-sm"
+          className="flex min-h-[40px] shrink-0 items-center gap-1 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:bg-gray-50 sm:min-h-0 sm:px-4 sm:text-sm"
         >
           <ChevronLeft className="h-4 w-4" />
           {backLabel}
@@ -56,13 +56,16 @@ export default function PageNav({
             return (
               <li key={`${item.label}-${index}`} className="flex min-w-0 items-center gap-1">
                 {item.href && !isLast ? (
-                  <Link href={item.href} className="truncate transition-colors hover:text-[#2B41B7]">
+                  <Link
+                    href={item.href}
+                    className="flex min-h-[32px] items-center truncate transition-colors hover:text-[#2B41B7]"
+                  >
                     {item.label}
                   </Link>
                 ) : (
                   <span
                     aria-current={isLast ? 'page' : undefined}
-                    className={`max-w-[16rem] truncate sm:max-w-[24rem] ${isLast ? 'font-medium text-gray-900' : ''}`}
+                    className={`flex min-h-[32px] max-w-[16rem] items-center truncate sm:max-w-[24rem] ${isLast ? 'font-medium text-gray-900' : ''}`}
                   >
                     {item.label}
                   </span>

@@ -181,7 +181,7 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister, onSwitc
                   placeholder="Пароль"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className={`w-full h-full px-5 pr-12 rounded-full border text-[15px] outline-none focus:border-[#4343D9] transition-all placeholder-[#C7C7CC]
+                  className={`w-full h-full px-5 pr-12 rounded-full border text-base outline-none focus:border-[#4343D9] transition-all placeholder-[#C7C7CC] sm:text-[15px]
                     ${passError ? 'border-[#EA4335] bg-[#FFFBFA] text-[#EA4335]' : 'border-[#E5E5EA] text-[#1F1F1F]'}`}
                 />
                 <button
@@ -213,7 +213,7 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister, onSwitc
               <button
                 type="submit"
                 disabled={loading}
-                style={{ width: '100%', maxWidth: '360px', height: '40px' }}
+                style={{ width: '100%', maxWidth: '360px', height: '44px' }}
                 className={`mt-2 text-white font-medium text-[15px] rounded-full active:scale-[0.98] transition-all flex items-center justify-center shadow-md
                   ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#4343D9] hover:bg-[#3232B8] shadow-[#4343D9]/20'}`}
               >

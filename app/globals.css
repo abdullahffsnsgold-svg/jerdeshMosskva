@@ -54,7 +54,8 @@ body {
   background: transparent !important;
   width: 100% !important;
   height: 100% !important;
-  font-size: 15px !important;
+  /* 16px — иначе iOS зумит страницу при фокусе на поле */
+  font-size: 16px !important;
   outline: none !important;
   padding-left: 8px !important;
   color: #1F1F1F !important;
@@ -65,6 +66,17 @@ body {
   background: transparent !important;
   padding-left: 12px !important;
   height: 100% !important;
+}
+
+/* Мобильные мелочи: без серой вспышки при тапе по кнопкам */
+@media (max-width: 640px) {
+  body {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 /* Скрываем скроллбар в ленте сторис */

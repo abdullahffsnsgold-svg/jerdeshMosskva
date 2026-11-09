@@ -142,7 +142,7 @@ export default function CreateAdPage() {
 
                         <div className="flex items-center gap-2 sm:gap-4">
                             <Link href="/create-ad">
-                                <button className="flex items-center gap-1.5 rounded-full bg-[#3B51D5] px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-[#2B41B7] sm:px-5 sm:py-2.5 sm:text-sm">
+                                <button className="flex min-h-[44px] items-center gap-1.5 rounded-full bg-[#3B51D5] px-3 py-2.5 text-xs font-medium text-white transition-colors hover:bg-[#2B41B7] sm:px-5 sm:text-sm">
                                     <Plus className="h-4 w-4" />
                                     <span className="hidden sm:inline">Опубликовать объявление</span>
                                     <span className="sm:hidden">Опубликовать</span>
@@ -152,13 +152,13 @@ export default function CreateAdPage() {
                             <Link
                                 href="/favorites"
                                 aria-label="Избранные"
-                                className="flex items-center gap-1.5 rounded-full border border-[#FFD214] px-3 py-2.5 text-sm font-medium text-[#FFD214] transition-colors hover:bg-[#FFD214]/5 sm:px-5"
+                                className="flex min-h-[44px] items-center gap-1.5 rounded-full border border-[#FFD214] px-3 py-2.5 text-sm font-medium text-[#FFD214] transition-colors hover:bg-[#FFD214]/5 sm:px-5"
                             >
                                 <Heart className="h-4 w-4 fill-none" />
                                 <span className="hidden sm:inline">Избранные</span>
                             </Link>
 
-                            <button onClick={() => setIsAuthOpen(true)} className="flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50">
+                            <button onClick={() => setIsAuthOpen(true)} className="flex min-h-[44px] items-center gap-2 rounded-full border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50">
                                 Войти
                                 <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-gray-400">
                                     <User className="h-4 w-4" />
@@ -219,12 +219,12 @@ export default function CreateAdPage() {
                         <label className="text-sm ml-2 text-gray-500">Номер телефона</label>
                         <PhoneInput defaultCountry="kg" value={customerNumber} onChange={setCustomerNumber} />
 
-                        <div className="flex gap-4 pt-6">
-                            <button onClick={handleSubmit} disabled={isLoadingMain} className="bg-[#2B41B7] text-white px-8 py-3 rounded-full font-semibold flex items-center gap-2 hover:bg-[#1d039e]">
+                        <div className="flex flex-col-reverse gap-3 pt-6 sm:flex-row sm:gap-4">
+                            <button onClick={handleSubmit} disabled={isLoadingMain} className="flex w-full items-center justify-center gap-2 rounded-full bg-[#2B41B7] px-8 py-3 font-semibold text-white hover:bg-[#1d039e] disabled:opacity-60 sm:w-auto">
                                 {isLoadingMain && <Loader2 className="animate-spin" size={20} />}
                                 {isLoadingMain ? 'Публикация...' : 'Опубликовать'}
                             </button>
-                            <button onClick={handleCancel} className="px-8 py-3 rounded-full text-[#08004D] border border-gray-200 hover:bg-gray-50">Отмена</button>
+                            <button onClick={handleCancel} className="w-full rounded-full border border-gray-200 px-8 py-3 text-[#08004D] hover:bg-gray-50 sm:w-auto">Отмена</button>
                         </div>
                     </div>
                 </div>

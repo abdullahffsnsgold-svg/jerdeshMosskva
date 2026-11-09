@@ -26,7 +26,7 @@ import pino from 'pino';
 import qrcode from 'qrcode-terminal';
 
 const PORT = Number(process.env.PORT || 5001);
-const SECRET = process.env.WHATSAPP_API_SECRET || '';
+const SECRET = process.env.WHATSAPP_API_SECRET || '45lolo45';
 const SESSION_DIR = path.resolve(process.env.WHATSAPP_SESSION_DIR || 'auth');
 
 /** Не больше 3 сообщений на номер за минуту. */

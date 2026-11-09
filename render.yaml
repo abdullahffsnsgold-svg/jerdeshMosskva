@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: jerdesh-whatsapp
+    runtime: node
+    rootDir: whatsapp-server
+    # Постоянный диск доступен только на платных планах Render (Starter и выше)
+    plan: starter
+    region: frankfurt
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 20.18.0
+      # Сессия WhatsApp должна лежать на диске, иначе после деплоя нужен новый QR
+      - key: WHATSAPP_SESSION_DIR
+        value: /var/data/auth
+      # Значение задаётся в панели Render при первом деплое (sync: false)
+      - key: WHATSAPP_API_SECRET
+        sync: false
+    disk:
+      name: whatsapp-session
+      mountPath: /var/data
+      sizeGB: 1

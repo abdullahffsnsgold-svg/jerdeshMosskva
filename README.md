@@ -44,6 +44,10 @@ WHATSAPP_API_SECRET=длинная-строка npm start
 В консоли появится QR-код: откройте WhatsApp → Связанные устройства → Связать
 устройство. Сессия сохраняется в `whatsapp-server/auth/` и переживает перезапуск.
 
+Готовые варианты развёртывания (Render с постоянным диском, Railway, VPS с systemd)
+описаны в [whatsapp-server/README.md](whatsapp-server/README.md); для Render в
+корне лежит blueprint [render.yaml](render.yaml).
+
 Затем укажите в окружении сайта (и в Vercel) адрес шлюза и тот же секрет:
 
 ```env

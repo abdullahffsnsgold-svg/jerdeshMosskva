@@ -1,37 +1,55 @@
 -- =========================================================
---  Безопасная авторизация:bcrypt + закрытая таблица users
---  Выполнить в Supabase → SQL Editor → Run.
---  Скрипт идемпотентный, его можно запускать на существующей базе
---  (после supabase/schema.sql).
+--  Безопасная авторизация Jerdesh: bcrypt + закрытая таблица users
 --
---  После запуска:
---   * anon-ключ больше не может читать/писать public.users напрямую;
+--  КАК ЗАПУСКАТЬ:
+--  Supabase → SQL Editor → New query → вставить файл целиком → Run.
+--  Скрипт идемпотентный, его можно запускать повторно.
+--
+--  В самом конце выводится таблица проверки. Все значения должны быть true.
+--  Если в приложении появляется «Сервер не настроен» — значит этот файл
+--  ещё не выполнен (или выполнен с ошибкой, текст ошибки будет в результате).
+--
+--  Что даёт скрипт:
+--   * anon/authenticated не могут читать и писать public.users напрямую;
 --   * пароли хранятся только как bcrypt-хеши;
 --   * вход / регистрация / сброс пароля идут через функции
 --     login_user, register_user, reset_user_password, check_phone_registered.
 -- =========================================================
 
--- ---------- 0. pgcrypto для crypt()/gen_salt() ----------
+-- ---------- 0. pgcrypto: нужен для crypt()/gen_salt() ----------
+-- На Supabase расширения ставятся в схему extensions; если оно уже стоит
+-- в другой схеме, команда просто ничего не изменит.
+create schema if not exists extensions;
 create extension if not exists pgcrypto with schema extensions;
 
--- ---------- 1. Одноразово хешируем старые пароли из открытого вида ----------
-update public.users
-set password = extensions.crypt(password, extensions.gen_salt('bf'))
-where password is not null
-  and password not like '$2a$%'
-  and password not like '$2b$%'
-  and password not like '$2y$%';
+-- ---------- 1. Переводим старые пароли из открытого вида в bcrypt ----------
+-- Ошибка здесь не должна ломать создание функций ниже.
+do $$
+begin
+  perform set_config('search_path', 'public, extensions', true);
+
+  update public.users
+     set password = crypt(password, gen_salt('bf'))
+   where password is not null
+     and password !~ '^\$2[aby]\$';
+exception
+  when others then
+    raise notice 'Миграция старых паролей пропущена: %', sqlerrm;
+end;
+$$;
 
 -- ---------- 2. Закрываем прямой доступ к таблице ----------
 alter table public.users enable row level security;
 
--- Убираем публичные политики, которые открывали таблицу раньше
+-- Убираем старые публичные политики, если они когда-то создавались
 drop policy if exists "users_select_public" on public.users;
 drop policy if exists "users_insert_public" on public.users;
 drop policy if exists "users_update_public" on public.users;
+drop policy if exists "users_delete_public" on public.users;
 
--- Даже при ошибке в политиках anon не имеет прав на таблицу
+-- Даже при ошибке в политиках anon не получит доступ к таблице
 revoke all on table public.users from anon, authenticated;
+grant usage on schema public to anon, authenticated;
 
 -- ---------- 3. Проверка: занят ли номер ----------
 create or replace function public.check_phone_registered(p_phone text)
@@ -57,21 +75,36 @@ security definer
 set search_path = public, extensions
 as $$
 declare
-  v_phone text := regexp_replace(coalesce(p_phone, ''), '\D', '', 'g');
-  v_user  public.users%rowtype;
+  v_phone   text := regexp_replace(coalesce(p_phone, ''), '\D', '', 'g');
+  v_user    public.users%rowtype;
+  v_ok      boolean := false;
+  v_password text := coalesce(p_password, '');
 begin
   select *
-  into v_user
-  from public.users u
-  where regexp_replace(u.phone, '\D', '', 'g') = v_phone
-  limit 1;
+    into v_user
+    from public.users u
+   where regexp_replace(u.phone, '\D', '', 'g') = v_phone
+   limit 1;
 
   if not found then
     return json_build_object('ok', false, 'error', 'not_found');
   end if;
 
-  -- crypt(введённый пароль, сохранённый хеш) должен совпасть с хешем
-  if v_user.password is distinct from extensions.crypt(coalesce(p_password, ''), v_user.password) then
+  if v_user.password ~ '^\$2[aby]\$' then
+    -- Обычный путь: bcrypt-хеш в базе
+    v_ok := crypt(v_password, v_user.password) = v_user.password;
+  else
+    -- Старая запись открытым текстом: сверяем как есть и сразу перехешируем
+    v_ok := v_user.password = v_password;
+
+    if v_ok then
+      update public.users
+         set password = crypt(v_password, gen_salt('bf'))
+       where id = v_user.id;
+    end if;
+  end if;
+
+  if not v_ok then
     return json_build_object('ok', false, 'error', 'bad_password');
   end if;
 
@@ -80,6 +113,10 @@ begin
     'id', v_user.id,
     'phone', regexp_replace(v_user.phone, '\D', '', 'g')
   );
+exception
+  -- Повреждённый хеш не должен превращаться в «ошибку сервера»
+  when others then
+    return json_build_object('ok', false, 'error', 'bad_password');
 end;
 $$;
 
@@ -110,7 +147,7 @@ begin
   end if;
 
   insert into public.users (phone, password)
-  values (v_phone, extensions.crypt(p_password, extensions.gen_salt('bf')))
+  values (v_phone, crypt(p_password, gen_salt('bf')))
   returning id into v_id;
 
   return json_build_object('ok', true, 'id', v_id, 'phone', v_phone);
@@ -129,16 +166,18 @@ set search_path = public, extensions
 as $$
 declare
   v_phone text := regexp_replace(coalesce(p_phone, ''), '\D', '', 'g');
+  v_id    bigint;
 begin
   if length(coalesce(p_password, '')) < 6 then
     return json_build_object('ok', false, 'error', 'password_short');
   end if;
 
   update public.users
-  set password = extensions.crypt(p_password, extensions.gen_salt('bf'))
-  where regexp_replace(phone, '\D', '', 'g') = v_phone;
+     set password = crypt(p_password, gen_salt('bf'))
+   where regexp_replace(phone, '\D', '', 'g') = v_phone
+  returning id into v_id;
 
-  if not found then
+  if v_id is null then
     return json_build_object('ok', false, 'error', 'not_found');
   end if;
 
@@ -152,5 +191,16 @@ grant execute on function public.login_user(text, text) to anon, authenticated;
 grant execute on function public.register_user(text, text) to anon, authenticated;
 grant execute on function public.reset_user_password(text, text) to anon, authenticated;
 
--- Обновляем кеш схемы PostgREST, чтобы RPC появились сразу
+-- ---------- 8. Обновляем кеш PostgREST, чтобы RPC появились сразу ----------
 notify pgrst, 'reload schema';
+
+-- ---------- 9. Самопроверка ----------
+-- Все значения должны быть true. Если какое-то false — функция не создана:
+-- прокрутите выше и посмотрите текст ошибки.
+select
+  to_regprocedure('public.check_phone_registered(text)') is not null as check_phone_registered,
+  to_regprocedure('public.login_user(text,text)')        is not null as login_user,
+  to_regprocedure('public.register_user(text,text)')     is not null as register_user,
+  to_regprocedure('public.reset_user_password(text,text)') is not null as reset_user_password,
+  (to_regprocedure('extensions.crypt(text,text)') is not null
+    or to_regprocedure('public.crypt(text,text)') is not null) as pgcrypto_installed;

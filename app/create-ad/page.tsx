@@ -11,6 +11,8 @@ import { Upload, X, Loader2, Heart, Plus, User } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import AuthModal from '@/app/components/AuthModal';
+import RegisterModal from '@/app/components/RegisterModal';
+import ForgotPasswordModal from '@/app/components/ForgotPasswordModal';
 import PageNav from '@/app/components/PageNav';
 
 interface Category { id: number; name: string; }
@@ -33,6 +35,8 @@ export default function CreateAdPage() {
     const [customerName, setCustomerName] = useState('');
     const [customerNumber, setCustomerNumber] = useState('');
     const [isAuthOpen, setIsAuthOpen] = useState(false);
+    const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+    const [isForgotOpen, setIsForgotOpen] = useState(false);
 
     useEffect(() => {
         async function fetchCategories() {
@@ -235,11 +239,29 @@ export default function CreateAdPage() {
                 onClose={() => setIsAuthOpen(false)}
                 onSwitchToRegister={() => {
                     setIsAuthOpen(false);
-                    router.push('/');
+                    setIsRegisterOpen(true);
                 }}
                 onSwitchToForgot={() => {
                     setIsAuthOpen(false);
-                    router.push('/');
+                    setIsForgotOpen(true);
+                }}
+            />
+
+            <RegisterModal
+                isOpen={isRegisterOpen}
+                onClose={() => setIsRegisterOpen(false)}
+                onSwitchToLogin={() => {
+                    setIsRegisterOpen(false);
+                    setIsAuthOpen(true);
+                }}
+            />
+
+            <ForgotPasswordModal
+                isOpen={isForgotOpen}
+                onClose={() => setIsForgotOpen(false)}
+                onSwitchToLogin={() => {
+                    setIsForgotOpen(false);
+                    setIsAuthOpen(true);
                 }}
             />
         </div>

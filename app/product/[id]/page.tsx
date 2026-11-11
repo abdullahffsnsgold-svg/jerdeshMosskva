@@ -13,10 +13,12 @@ import {
   Heart,
   Plus
 } from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import AuthModal from '@/app/components/AuthModal';
+import RegisterModal from '@/app/components/RegisterModal';
+import ForgotPasswordModal from '@/app/components/ForgotPasswordModal';
 import PageNav from '@/app/components/PageNav';
 import { checkIsAuth } from '@/lib/auth';
 import { toggleFavorite, useFavoriteIds } from '@/lib/favorites';
@@ -52,7 +54,6 @@ const Skeleton = ({ className }: { className: string }) => (
 export default function ProductPage() {
   const params = useParams();
   const id = params.id as string;
-  const router = useRouter();
 
   const [product, setProduct] = useState<ProductWithCategory | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -60,6 +61,8 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true);
   const [isCommentSending, setIsCommentSending] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [isForgotOpen, setIsForgotOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const favoriteIds = useFavoriteIds();
 
@@ -315,11 +318,29 @@ export default function ProductPage() {
         onClose={() => setIsAuthOpen(false)}
         onSwitchToRegister={() => {
           setIsAuthOpen(false);
-          router.push('/');
+          setIsRegisterOpen(true);
         }}
         onSwitchToForgot={() => {
           setIsAuthOpen(false);
-          router.push('/');
+          setIsForgotOpen(true);
+        }}
+      />
+
+      <RegisterModal
+        isOpen={isRegisterOpen}
+        onClose={() => setIsRegisterOpen(false)}
+        onSwitchToLogin={() => {
+          setIsRegisterOpen(false);
+          setIsAuthOpen(true);
+        }}
+      />
+
+      <ForgotPasswordModal
+        isOpen={isForgotOpen}
+        onClose={() => setIsForgotOpen(false)}
+        onSwitchToLogin={() => {
+          setIsForgotOpen(false);
+          setIsAuthOpen(true);
         }}
       />
     </div>

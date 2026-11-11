@@ -28,7 +28,7 @@ body {
 /* Стилизация инпута телефона через глобальные классы библиотеки */
 .custom-phone-wrapper {
   width: 100% !important;
-  max-width: 360px !important;
+  max-width: 100% !important;
   height: 44px !important;
   display: flex;
   align-items: center;
@@ -41,6 +41,12 @@ body {
 
 .custom-phone-wrapper:focus-within {
   border-color: #4343D9;
+}
+
+/* Ошибка в поле номера: отдельный класс, иначе правила выше перекрывают цвет */
+.custom-phone-wrapper--error {
+  border-color: #EA4335 !important;
+  background-color: #FFFBFA !important;
 }
 
 .custom-phone-wrapper .react-international-phone-input-container {

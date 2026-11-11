@@ -20,6 +20,23 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Вход, регистрация и пароли
+
+Вход проверяет пароль в базе Supabase, поэтому без серверных функций он не заработает.
+
+1. Supabase → **SQL Editor** → New query.
+2. Вставить [supabase/secure-users.sql](supabase/secure-users.sql) целиком и нажать **Run**.
+3. В конце скрипт выведет таблицу проверки — все значения должны быть `true`.
+4. Если вход всё равно отвечает `Could not find the function ... in the schema cache`,
+   выполните ещё одну строку `notify pgrst, 'reload schema';` и подождите минуту.
+
+`supabase/schema.sql` создаёт таблицы, `supabase/secure-users.sql` — функции
+`login_user`, `register_user`, `reset_user_password`, `check_phone_registered`
+и хранение паролей в bcrypt. Прямой доступ к `public.users` при этом закрыт.
+
+Пока скрипт не выполнен, приложение показывает
+«Сервер не настроен: выполните supabase/secure-users.sql в Supabase → SQL Editor».
+
 ## Отправка кодов на номер
 
 Коды регистрации и сброса пароля отправляет серверный маршрут `POST /api/send-code`.

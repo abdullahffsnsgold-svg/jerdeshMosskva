@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Отдельный Node-процесс (WhatsApp-шлюз), eslint-config-next к нему не применим
+    "whatsapp-server/**",
   ]),
 ]);
 

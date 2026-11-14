@@ -55,7 +55,16 @@ function loadDotEnv() {
 
 loadDotEnv();
 
-const PORT = Number(process.env.PORT || 5001);
+/**
+ * Некоторые окружения выставляют PORT=0 или мусор — тогда сервер слушал бы
+ * случайный порт, и сайт не смог бы к нему подключиться.
+ */
+function resolvePort() {
+  const value = Number(process.env.PORT);
+  return Number.isInteger(value) && value > 0 && value < 65536 ? value : 5001;
+}
+
+const PORT = resolvePort();
 const SECRET = process.env.WHATSAPP_API_SECRET;
 const SESSION_DIR = path.resolve(process.env.WHATSAPP_SESSION_DIR || 'auth');
 
@@ -262,7 +271,9 @@ connect().catch((error) => {
 });
 
 server.listen(PORT, () => {
-  logger.info(`WhatsApp-шлюз слушает http://localhost:${PORT}`);
+  const address = server.address();
+  const actualPort = typeof address === 'object' && address ? address.port : PORT;
+  logger.info(`WhatsApp-шлюз слушает http://localhost:${actualPort}`);
 });
 
 function shutdown(signal) {

@@ -1,22 +1,24 @@
 import { NextResponse } from 'next/server';
 
 /**
- * Отправка кодов подтверждения на номер.
+ * Отправка кодов подтверждения в WhatsApp через собственный шлюз.
  *
- * Провайдер выбирается по переменным окружения:
- *   WHATSAPP_GATEWAY_URL + WHATSAPP_GATEWAY_SECRET        → свой WhatsApp-шлюз (whatsapp-server/)
- *   TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN + TWILIO_FROM  → Twilio
- *   VONAGE_API_KEY + VONAGE_API_SECRET (+ SMS_SENDER_ID)   → Vonage
- *   ничего не задано                                      → консоль (только в dev)
+ * Почему только WhatsApp: код уходит с личного номера владельца сайта
+ * (whatsapp-server/, привязка по QR), поэтому SMS-провайдеры не нужны.
  *
- * В production без ключей маршрут отвечает 503: код некуда отправлять.
+ * Переменные окружения:
+ *   WHATSAPP_GATEWAY_URL     адрес шлюза, например https://xxx.onrender.com
+ *   WHATSAPP_GATEWAY_SECRET  тот же WHATSAPP_API_SECRET, что у шлюза
+ *
+ * В dev без этих переменных код печатается в консоль сервера, в production
+ * маршрут отвечает 503: отправлять некуда.
  */
 
 export const runtime = 'nodejs';
 
 const CODE_RE = /^\d{6}$/;
 
-/** Обрезает ответ провайдера, чтобы он влез в сообщение об ошибке. */
+/** Обрезает ответ шлюза, чтобы он влез в сообщение об ошибке. */
 function trimDetail(detail: string): string {
   const single = detail.replace(/\s+/g, ' ').trim();
   return single.length > 200 ? `${single.slice(0, 200)}…` : single;
@@ -25,8 +27,6 @@ function trimDetail(detail: string): string {
 /** Не больше 3 отправок на номер за минуту. */
 const RATE_LIMIT = 3;
 const RATE_WINDOW_MS = 60_000;
-
-type Provider = 'whatsapp' | 'twilio' | 'vonage' | 'console';
 
 interface SendResult {
   ok: boolean;
@@ -57,102 +57,35 @@ function isRateLimited(phone: string): boolean {
   return false;
 }
 
-function activeProvider(): Provider | null {
-  if (process.env.WHATSAPP_GATEWAY_URL && process.env.WHATSAPP_GATEWAY_SECRET) return 'whatsapp';
-
-  const twilioReady =
-    process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM;
-
-  if (twilioReady) return 'twilio';
-
-  const vonageReady = process.env.VONAGE_API_KEY && process.env.VONAGE_API_SECRET;
-  if (vonageReady) return 'vonage';
-
-  return process.env.NODE_ENV === 'production' ? null : 'console';
-}
-
-function messageFor(code: string) {
-  return `Код подтверждения Jerdesh: ${code}. Никому его не сообщайте.`;
-}
-
 async function sendViaWhatsApp(to: string, code: string): Promise<SendResult> {
   const baseUrl = (process.env.WHATSAPP_GATEWAY_URL as string).replace(/\/+$/, '');
 
-  const response = await fetch(`${baseUrl}/api/send-code`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-secret': process.env.WHATSAPP_GATEWAY_SECRET as string,
-    },
-    body: JSON.stringify({ phone: to, code }),
-    // Шлюз может быть на медленном канале — не держим запрос бесконечно
-    signal: AbortSignal.timeout(15_000),
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(`${baseUrl}/api/send-code`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-secret': process.env.WHATSAPP_GATEWAY_SECRET as string,
+      },
+      body: JSON.stringify({ phone: to, code }),
+      // Шлюз может быть на медленном канале — не держим запрос бесконечно
+      signal: AbortSignal.timeout(20_000),
+    });
+  } catch (error) {
+    // Самая частая причина: шлюз не запущен или адрес устарел после перезапуска
+    const reason = error instanceof Error ? error.message : String(error);
+    return {
+      ok: false,
+      detail: `Шлюз недоступен по адресу ${baseUrl}. ${reason}`,
+    };
+  }
+
+  const data = (await response.json().catch(() => null)) as { message?: string } | null;
 
   if (!response.ok) {
-    const data = (await response.json().catch(() => null)) as { message?: string } | null;
     return { ok: false, detail: data?.message ?? `HTTP ${response.status}` };
-  }
-
-  return { ok: true };
-}
-
-async function sendViaTwilio(to: string, code: string): Promise<SendResult> {
-  const sid = process.env.TWILIO_ACCOUNT_SID as string;
-  const token = process.env.TWILIO_AUTH_TOKEN as string;
-  const from = process.env.TWILIO_FROM as string;
-
-  const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${Buffer.from(`${sid}:${token}`).toString('base64')}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({ To: to, From: from, Body: messageFor(code) }),
-  });
-
-  if (!response.ok) {
-    // Twilio отдаёт JSON { code, message, more_info } — берём человеческий текст
-    const data = (await response.json().catch(() => null)) as
-      | { code?: number; message?: string }
-      | null;
-
-    const detail = data?.message
-      ? `${data.message}${data.code ? ` (код ${data.code})` : ''}`
-      : `HTTP ${response.status}`;
-
-    return { ok: false, detail };
-  }
-
-  return { ok: true };
-}
-
-async function sendViaVonage(to: string, code: string): Promise<SendResult> {
-  const key = process.env.VONAGE_API_KEY as string;
-  const secret = process.env.VONAGE_API_SECRET as string;
-  const from = process.env.SMS_SENDER_ID || 'Jerdesh';
-
-  const response = await fetch('https://rest.nexmo.com/sms/json', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      api_key: key,
-      api_secret: secret,
-      // Vonage принимает номер без плюса
-      to: to.replace(/^\+/, ''),
-      from,
-      text: messageFor(code),
-      type: 'unicode',
-    }),
-  });
-
-  const data = (await response.json().catch(() => null)) as
-    | { messages?: { status?: string; 'error-text'?: string }[] }
-    | null;
-
-  const first = data?.messages?.[0];
-  if (!response.ok || first?.status !== '0') {
-    return { ok: false, detail: first?.['error-text'] ?? `HTTP ${response.status}` };
   }
 
   return { ok: true };
@@ -197,57 +130,47 @@ export async function POST(request: Request) {
     ? incomingCode
     : Math.floor(100000 + Math.random() * 900000).toString();
 
-  const provider = activeProvider();
+  const gatewayReady = Boolean(
+    process.env.WHATSAPP_GATEWAY_URL && process.env.WHATSAPP_GATEWAY_SECRET,
+  );
 
-  if (!provider) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: 'provider_not_configured',
-        message:
-          'Отправка кодов не настроена: добавьте WHATSAPP_GATEWAY_URL и WHATSAPP_GATEWAY_SECRET или ключи SMS-провайдера.',
-      },
-      { status: 503 },
-    );
+  if (!gatewayReady) {
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: 'provider_not_configured',
+          message:
+            'Отправка кодов не настроена: добавьте WHATSAPP_GATEWAY_URL и WHATSAPP_GATEWAY_SECRET на Vercel.',
+        },
+        { status: 503 },
+      );
+    }
+
+    // В dev без шлюза код печатается в консоль сервера, чтобы можно было проверить вход
+    console.info(`[send-code] dev-режим: код ${code} для ${phone}`);
+    return NextResponse.json({ ok: true, provider: 'console' });
   }
 
   try {
-    const result =
-      provider === 'whatsapp'
-        ? await sendViaWhatsApp(phone, code)
-        : provider === 'twilio'
-          ? await sendViaTwilio(phone, code)
-          : provider === 'vonage'
-            ? await sendViaVonage(phone, code)
-            : { ok: true };
+    const result = await sendViaWhatsApp(phone, code);
 
     if (!result.ok) {
-      console.error('[send-code] провайдер отказал', provider, phone.slice(-4), result.detail);
-
-      const fallback =
-        provider === 'whatsapp'
-          ? 'Не удалось отправить код в WhatsApp.'
-          : 'Не удалось отправить SMS.';
-
+      console.error('[send-code] шлюз отказал', phone.slice(-4), result.detail);
       return NextResponse.json(
         {
           ok: false,
           error: 'send_failed',
-          provider,
-          // Показываем причину от провайдера: без неё ошибку невозможно исправить
-          // (например, Twilio 21608 — номер не подтверждён в пробном аккаунте)
-          message: result.detail ? `${fallback} ${trimDetail(result.detail)}` : fallback,
+          provider: 'whatsapp',
+          message: `Не удалось отправить код в WhatsApp. ${trimDetail(
+            result.detail ?? 'Шлюз вернул ошибку.',
+          )}`,
         },
         { status: 502 },
       );
     }
 
-    // В dev без провайдера код печатается в консоль сервера, чтобы можно было проверить вход
-    if (provider === 'console') {
-      console.info(`[send-code] dev-режим: код ${code} для ${phone}`);
-    }
-
-    return NextResponse.json({ ok: true, provider });
+    return NextResponse.json({ ok: true, provider: 'whatsapp' });
   } catch (error) {
     console.error('[send-code] ошибка отправки', error);
     return NextResponse.json(

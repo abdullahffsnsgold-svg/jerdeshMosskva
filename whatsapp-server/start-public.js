@@ -150,7 +150,11 @@ async function main() {
     return;
   }
 
-  log(`Шлюз готов, WhatsApp ${health.ready ? 'подключён' : 'НЕ подключён (нужен QR)'}.`);
+  log(
+    health.ready
+      ? 'Шлюз готов, WhatsApp подключён.'
+      : 'Шлюз отвечает, WhatsApp ещё подключается. Если так и останется — запустите public.cmd и отсканируйте QR.',
+  );
 
   if (!existsSync(CLOUDFLARED)) {
     log(`Нет ${CLOUDFLARED}. Скачайте cloudflared или запустите public.cmd.`);

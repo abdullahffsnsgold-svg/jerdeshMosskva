@@ -7,6 +7,14 @@ export const dynamic = 'force-dynamic';
 
 const LIST_LIMIT = 100;
 
+// Колонки объявлений. Если база создана по старой схеме и колонки views в ней нет,
+// запрос повторится без неё: панель должна показывать данные, а не падать целиком.
+const PRODUCT_COLUMNS = 'id, title, price, location, views, customer_name, customer_number, image_url, created_at, categories ( name )';
+const PRODUCT_COLUMNS_NO_VIEWS = 'id, title, price, location, customer_name, customer_number, image_url, created_at, categories ( name )';
+
+/** PostgREST так сообщает об отсутствующей колонке или устаревшем кеше схемы */
+const isMissingColumn = (message: string) => /does not exist|schema cache|schema_cache/i.test(message);
+
 /**
  * Всё, что показывает панель: счётчики и последние записи.
  * Доступ только при живой админ-сессии, запросы идут с service-role ключом.
@@ -58,12 +66,23 @@ export async function GET() {
     );
   }
 
+  const loadProducts = async () => {
+    const query = (columns: string) =>
+      supabase
+        .from('products')
+        .select(columns)
+        .order('created_at', { ascending: false })
+        .limit(LIST_LIMIT);
+
+    const withViews = await query(PRODUCT_COLUMNS);
+
+    if (!withViews.error || !isMissingColumn(withViews.error.message)) return withViews;
+
+    return query(PRODUCT_COLUMNS_NO_VIEWS);
+  };
+
   const [products, stories, comments, users, categories] = await Promise.all([
-    supabase
-      .from('products')
-      .select('id, title, price, location, views, customer_name, customer_number, image_url, created_at, categories ( name )')
-      .order('created_at', { ascending: false })
-      .limit(LIST_LIMIT),
+    loadProducts(),
     supabase
       .from('user_stories')
       .select('id, title, text, media_url, media_type, customer_number, created_at')

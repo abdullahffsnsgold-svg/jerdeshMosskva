@@ -34,6 +34,15 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 `login_user`, `register_user`, `reset_user_password`, `check_phone_registered`
 и хранение паролей в bcrypt. Прямой доступ к `public.users` при этом закрыт.
 
+### Если база создана раньше: «column products.views does not exist»
+
+`schema.sql` содержит `create table if not exists`, поэтому уже существующие
+таблицы он не меняет: новая колонка в старой базе сама не появится. Такую базу
+догоняет [supabase/migrate.sql](supabase/migrate.sql) — выполните его целиком в
+SQL Editor и подождите несколько секунд, пока PostgREST перечитает схему.
+Скрипт идемпотентный: добавляет только недостающие колонки, индексы и политики,
+данные не удаляет.
+
 Пока скрипт не выполнен, приложение показывает
 «Сервер не настроен: выполните supabase/secure-users.sql в Supabase → SQL Editor».
 

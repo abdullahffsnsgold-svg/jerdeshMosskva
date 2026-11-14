@@ -110,6 +110,31 @@ WHATSAPP_GATEWAY_URL=http://localhost:5001
 WHATSAPP_GATEWAY_SECRET=<тот же секрет>
 ```
 
+## Быстрая диагностика, если «не работает»
+
+Шлюз — отдельный процесс. На Vercel он жить не может: там нет постоянного
+процесса и диска, поэтому хостинг обязателен (Render/Railway/VPS).
+
+Проверка по шагам:
+
+```bash
+# 1. шлюз жив и WhatsApp привязан
+curl -s https://<адрес-шлюза>/health
+#    ожидаем: {"ok":true,"ready":true,...}
+
+# 2. секрет совпадает с WHATSAPP_GATEWAY_SECRET на сайте
+curl -s -o /dev/null -w "%{http_code}\n" -X POST https://<адрес-шлюза>/api/send-code \
+  -H 'content-type: application/json' -H 'x-api-secret: неверный' -d '{}'
+#    ожидаем: 401
+```
+
+Если сайт отвечает `503 provider_not_configured` — на Vercel не заданы
+`WHATSAPP_GATEWAY_URL` и `WHATSAPP_GATEWAY_SECRET` (или не сделан Redeploy).
+Если `502` — адрес шлюза не отвечает или секрет не совпал.
+
+Секрет обязателен: без `WHATSAPP_API_SECRET` процесс теперь завершается с ошибкой,
+а не запускается с общим паролем по умолчанию.
+
 ## Если что-то не так
 
 | Симптом | Причина |

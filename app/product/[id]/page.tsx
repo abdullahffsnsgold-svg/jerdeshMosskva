@@ -125,7 +125,9 @@ export default function ProductPage() {
       .insert({
         product_id: id,
         text,
-        username: localStorage.getItem('userPhone') || 'Пользователь',
+        // Имя из Google-профиля точнее, чем почта; для входа по номеру остаётся номер
+        username:
+          localStorage.getItem('userName') || localStorage.getItem('userPhone') || 'Пользователь',
       })
       .select()
       .single();

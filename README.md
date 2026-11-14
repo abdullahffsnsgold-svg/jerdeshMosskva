@@ -46,6 +46,43 @@ SQL Editor и подождите несколько секунд, пока Postg
 Пока скрипт не выполнен, приложение показывает
 «Сервер не настроен: выполните supabase/secure-users.sql в Supabase → SQL Editor».
 
+## Вход через Google
+
+Кнопка «Войти через Google» есть в окнах входа и регистрации. Она работает через
+OAuth-провайдер Supabase, поэтому включается в двух панелях.
+
+1. **Google Cloud Console** → APIs & Services → Credentials → Create credentials →
+   OAuth client ID → тип **Web application**.
+2. В **Authorized redirect URIs** добавьте адрес Supabase, а не сайта:
+
+   ```
+   https://<project-ref>.supabase.co/auth/v1/callback
+   ```
+
+   `<project-ref>` — часть адреса проекта (`lcrnevxkivowmrmieabc` для текущего).
+3. Скопируйте **Client ID** и **Client Secret**.
+4. **Supabase** → Authentication → Providers → **Google** → включите провайдер,
+   вставьте оба значения и сохраните.
+5. **Supabase** → Authentication → URL Configuration:
+
+   ```
+   Site URL:      https://ваш-домен
+   Redirect URLs: https://ваш-домен/auth/callback
+                  http://localhost:3000/auth/callback
+   ```
+
+6. Проверьте: откройте сайт → «Войти» → «Войти через Google».
+
+После возврата с Google приложение открывает `/auth/callback`, меняет код на
+сессию и запоминает вход так же, как при входе по номеру. Аккаунты Google живут
+в Supabase Auth (`auth.users`), а не в таблице `public.users`, поэтому номер
+телефона у такого пользователя пустой, а комментарии подписываются именем из
+профиля Google.
+
+Если вместо входа появляется ошибка, `describeOauthError` в `lib/auth.ts`
+подсказывает причину: провайдер выключен, адрес возврата не разрешён или не
+подходит Client ID.
+
 ## Отправка кодов на номер
 
 Коды регистрации и сброса пароля отправляет серверный маршрут `POST /api/send-code`.

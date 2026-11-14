@@ -57,7 +57,7 @@ export const describeAuthError = (error?: AuthError): string => {
     case 'password_short':
       return 'Пароль должен содержать не менее 6 символов';
     case 'db_not_ready':
-      return 'Сервер не настроен: выполните supabase/secure-users.sql в Supabase → SQL Editor';
+      return 'Сервер не настроен: выполните supabase/secure-users.sql в Supabase → SQL Editor и нажмите Reload schema';
     default:
       return 'Ошибка сервера, попробуйте позже';
   }
@@ -108,6 +108,52 @@ export async function registerWithPhone(phone: string, password: string): Promis
 
   return toResult(data, error);
 }
+
+/** Страница, на которую Supabase возвращает после Google-входа. */
+export const googleCallbackUrl = () =>
+  typeof window === 'undefined' ? '/auth/callback' : `${window.location.origin}/auth/callback`;
+
+/**
+ * Вход через Google (OAuth-провайдер Supabase).
+ * Метод уводит браузер на страницу Google, поэтому после вызова ничего
+ * исполняться не должно: результат приходит уже на /auth/callback.
+ */
+export async function loginWithGoogle(): Promise<{ ok: boolean; message?: string }> {
+  try {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: googleCallbackUrl(),
+        queryParams: { prompt: 'select_account' },
+      },
+    });
+
+    if (error) return { ok: false, message: error.message };
+    return { ok: true };
+  } catch (error) {
+    console.error('[google] не удалось начать вход', error);
+    return { ok: false, message: 'Не удалось открыть окно Google. Проверьте интернет.' };
+  }
+}
+
+/** Объясняет ошибку возврата от Supabase понятным текстом. */
+export const describeOauthError = (raw: string): string => {
+  const text = raw.toLowerCase();
+
+  if (text.includes('provider is not enabled') || text.includes('provider_not_enabled')) {
+    return 'Вход через Google не включён: Supabase → Authentication → Providers → Google.';
+  }
+
+  if (text.includes('redirect_uri_mismatch') || text.includes('redirect uri')) {
+    return 'Адрес возврата не разрешён. Добавьте адрес сайта в Supabase → Authentication → URL Configuration.';
+  }
+
+  if (text.includes('unauthorized_client') || text.includes('client_id')) {
+    return 'Google не принял Client ID: проверьте ключи провайдера в Supabase.';
+  }
+
+  return 'Не удалось войти через Google. Попробуйте ещё раз.';
+};
 
 /** Сброс пароля: новый хеш записывается внутри функции. */
 export async function resetPasswordWithPhone(phone: string, password: string): Promise<AuthResult> {

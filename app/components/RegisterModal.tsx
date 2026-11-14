@@ -9,6 +9,7 @@ import { Eye, EyeOff, MessageCircle } from 'lucide-react';
 import { PhoneInput } from 'react-international-phone';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import ModalFrame from './ModalFrame';
+import GoogleButton from './GoogleButton';
 import 'react-international-phone/style.css';
 
 interface RegisterModalProps {
@@ -399,6 +400,18 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
                 {loading ? <Spinner /> : 'Продолжить'}
               </button>
             </form>
+
+            <div className="flex items-center gap-3 text-[12px] uppercase tracking-wide text-[#C7C7CC]">
+              <span className="h-px flex-1 bg-[#E5E5EA]" />
+              или
+              <span className="h-px flex-1 bg-[#E5E5EA]" />
+            </div>
+
+            <GoogleButton
+              onError={setError}
+              disabled={loading}
+              label="Зарегистрироваться через Google"
+            />
 
             <p className="text-center text-[13px] text-[#8E8E93]">
               Уже есть аккаунт?{' '}

@@ -141,6 +141,9 @@ export default function Home() {
                 onClick={() => {
                   localStorage.removeItem('isAuth');
                   localStorage.removeItem('userPhone');
+                  localStorage.removeItem('userName');
+                  // Google-вход живёт в сессии Supabase — закрываем и её
+                  void supabase.auth.signOut();
                   window.dispatchEvent(new Event('authChange')); // Сигнал для выхода
                 }}
                 className="flex min-h-[44px] items-center rounded-full border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"

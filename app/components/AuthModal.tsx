@@ -8,6 +8,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { PhoneInput } from 'react-international-phone';
 import { motion, Variants } from 'framer-motion';
 import ModalFrame from './ModalFrame';
+import GoogleButton from './GoogleButton';
 import 'react-international-phone/style.css';
 
 interface AuthModalProps {
@@ -196,6 +197,18 @@ export default function AuthModal({ isOpen, onClose, onSwitchToRegister, onSwitc
           {loading ? <Spinner /> : 'Войти'}
         </button>
       </form>
+
+      <div className="my-4 flex items-center gap-3 text-[12px] uppercase tracking-wide text-[#C7C7CC]">
+        <span className="h-px flex-1 bg-[#E5E5EA]" />
+        или
+        <span className="h-px flex-1 bg-[#E5E5EA]" />
+      </div>
+
+      <GoogleButton
+        onError={setError}
+        disabled={loading}
+        label="Войти через Google"
+      />
 
       <p className="mt-5 text-center text-[13px] text-[#8E8E93]">
         Ещё нет аккаунта?{' '}

@@ -17,4 +17,14 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient(
   supabaseUrl || 'https://placeholder.supabase.co',
   supabaseAnonKey || 'placeholder-anon-key',
+  {
+    auth: {
+      flowType: 'pkce',
+      // Код из ссылки возврата обмениваем сами на /auth/callback —
+      // так обмен происходит ровно один раз и без гонки с авторазбором URL.
+      detectSessionInUrl: false,
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  },
 );

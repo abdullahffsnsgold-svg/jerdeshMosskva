@@ -19,9 +19,13 @@ export const supabase = createClient(
   supabaseAnonKey || 'placeholder-anon-key',
   {
     auth: {
-      flowType: 'pkce',
-      // Код из ссылки возврата обмениваем сами на /auth/callback —
-      // так обмен происходит ровно один раз и без гонки с авторазбором URL.
+      // Implicit-поток: Supabase возвращает токены во фрагменте ссылки.
+      // PKCE требует хранить code verifier в localStorage, и если его нет
+      // (очистка хранилища, другой браузер, повторное открытие ссылки),
+      // вход падает с «code verifier not found».
+      flowType: 'implicit',
+      // Авторазбор URL отключён: иначе supabase-js сам съест токены из адреса
+      // раньше, чем страница /auth/callback успеет сохранить вход.
       detectSessionInUrl: false,
       persistSession: true,
       autoRefreshToken: true,

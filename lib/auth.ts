@@ -152,6 +152,14 @@ export const describeOauthError = (raw: string): string => {
     return 'Google не принял Client ID: проверьте ключи провайдера в Supabase.';
   }
 
+  if (text.includes('code verifier') || text.includes('both auth code')) {
+    return 'Ссылка входа устарела. Нажмите «Войти через Google» ещё раз.';
+  }
+
+  if (text.includes('expired') || text.includes('invalid request')) {
+    return 'Ссылка входа больше не действует. Попробуйте войти заново.';
+  }
+
   return 'Не удалось войти через Google. Попробуйте ещё раз.';
 };
 

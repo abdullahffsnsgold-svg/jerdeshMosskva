@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner"; // 1. Импортируем Toaster
 import AnalyticsProvider from "./components/AnalyticsProvider";
+import AuthSessionCatcher from "./components/AuthSessionCatcher";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -31,6 +32,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         {children}
+        <AuthSessionCatcher /> {/* Google-вход, вернувшийся не на /auth/callback */}
         <AnalyticsProvider /> {/* PostHog Session Replay — только после согласия */}
         <Toaster position="top-right" richColors /> {/* 2. Добавляем компонент Toaster */}
       </body>

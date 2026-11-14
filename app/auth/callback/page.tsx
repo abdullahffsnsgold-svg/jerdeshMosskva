@@ -8,10 +8,12 @@ import { supabase } from '@/lib/supabase';
 import { describeOauthError } from '@/lib/auth';
 import { captureEvent } from '@/lib/analytics';
 
+type SessionUser = Awaited<ReturnType<typeof supabase.auth.getSession>>['data']['session'];
+
 /**
- * Supabase возвращает сюда после входа через Google (?code=...).
- * Здесь код меняется на сессию, а приложение запоминает вход так же,
- * как при входе по номеру: localStorage + событие authChange.
+ * Supabase возвращает сюда после входа через Google.
+ * Токены приходят во фрагменте ссылки (#access_token=...), поэтому читаем их
+ * сами и кладём в сессию, а вход запоминаем так же, как при входе по номеру.
  */
 export default function AuthCallbackPage() {
   const router = useRouter();
@@ -21,34 +23,67 @@ export default function AuthCallbackPage() {
     let cancelled = false;
 
     const finish = async () => {
-      const params = new URLSearchParams(window.location.search);
+      const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      const query = new URLSearchParams(window.location.search);
 
-      // Google или Supabase могли вернуть отказ вместо кода
-      const oauthError = params.get('error_description') ?? params.get('error');
+      const oauthError =
+        hash.get('error_description') ??
+        hash.get('error') ??
+        query.get('error_description') ??
+        query.get('error');
+
       if (oauthError) {
         if (!cancelled) setError(describeOauthError(oauthError));
         return;
       }
 
-      const code = params.get('code');
-      if (code) {
-        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+      let session: SessionUser = null;
+
+      const accessToken = hash.get('access_token');
+      const refreshToken = hash.get('refresh_token');
+
+      if (accessToken && refreshToken) {
+        const { data, error: sessionError } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        if (sessionError) {
+          console.error('[google] не удалось сохранить сессию', sessionError.message);
+          if (!cancelled) setError(describeOauthError(sessionError.message));
+          return;
+        }
+
+        session = data.session;
+        // Токены больше не нужны в адресной строке
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+
+      // Запасной путь: если проект вернул код (PKCE), пробуем обменять его
+      const code = query.get('code');
+      if (!session && code) {
+        const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
         if (exchangeError) {
           console.error('[google] обмен кода не удался', exchangeError.message);
           if (!cancelled) setError(describeOauthError(exchangeError.message));
           return;
         }
+
+        session = data.session;
       }
 
-      const { data } = await supabase.auth.getSession();
-      const user = data.session?.user;
+      if (!session) {
+        const { data } = await supabase.auth.getSession();
+        session = data.session;
+      }
 
-      if (!user) {
+      if (!session?.user) {
         if (!cancelled) setError('Сессия не создалась. Попробуйте войти через Google ещё раз.');
         return;
       }
 
+      const user = session.user;
       const name =
         (user.user_metadata?.full_name as string | undefined) ??
         (user.user_metadata?.name as string | undefined) ??

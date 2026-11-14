@@ -6,7 +6,8 @@
   "description": "Мини-сервер, который отправляет коды подтверждения в WhatsApp",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "public": "node start-public.js"
   },
   "engines": {
     "node": ">=20"

@@ -126,6 +126,19 @@ https://scanners-met-antarctica-karaoke.trycloudflare.com
 
 Альтернатива с постоянным адресом — платный Render/Railway/VPS (см. выше).
 
+### Автозапуск при включении компьютера
+
+`autostart.vbs` поднимает шлюз и туннель без окон. Чтобы он запускался сам,
+ярлык на него лежит в папке «Автозагрузка» Windows
+(`Win+R` → `shell:startup`). Проверить, что работает:
+
+```bash
+curl -s http://localhost:5001/health      # ready:true
+cat gateway-url.txt                       # текущий публичный адрес
+```
+
+Если автозапуск не нужен — удалите ярлык «Jerdesh WhatsApp» из «Автозагрузки».
+
 ## Подключение к сайту
 
 После того как шлюз отвечает по HTTPS и `ready:true`, в Vercel:

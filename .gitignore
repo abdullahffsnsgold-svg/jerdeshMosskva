@@ -44,6 +44,10 @@ yarn-error.log*
 /whatsapp-server/node_modules/
 # скачанный cloudflared.exe для публичного туннеля
 /whatsapp-server/.bin/
+# адрес туннеля и логи запуска — создаются на компьютере
+/whatsapp-server/gateway-url.txt
+/whatsapp-server/start-public.log
+/whatsapp-server/start-public.out.log
 
 # typescript
 *.tsbuildinfo

@@ -16,6 +16,12 @@ export const runtime = 'nodejs';
 
 const CODE_RE = /^\d{6}$/;
 
+/** Обрезает ответ провайдера, чтобы он влез в сообщение об ошибке. */
+function trimDetail(detail: string): string {
+  const single = detail.replace(/\s+/g, ' ').trim();
+  return single.length > 200 ? `${single.slice(0, 200)}…` : single;
+}
+
 /** Не больше 3 отправок на номер за минуту. */
 const RATE_LIMIT = 3;
 const RATE_WINDOW_MS = 60_000;
@@ -106,8 +112,16 @@ async function sendViaTwilio(to: string, code: string): Promise<SendResult> {
   });
 
   if (!response.ok) {
-    const text = await response.text();
-    return { ok: false, detail: text.slice(0, 300) };
+    // Twilio отдаёт JSON { code, message, more_info } — берём человеческий текст
+    const data = (await response.json().catch(() => null)) as
+      | { code?: number; message?: string }
+      | null;
+
+    const detail = data?.message
+      ? `${data.message}${data.code ? ` (код ${data.code})` : ''}`
+      : `HTTP ${response.status}`;
+
+    return { ok: false, detail };
   }
 
   return { ok: true };
@@ -209,15 +223,20 @@ export async function POST(request: Request) {
 
     if (!result.ok) {
       console.error('[send-code] провайдер отказал', provider, phone.slice(-4), result.detail);
+
+      const fallback =
+        provider === 'whatsapp'
+          ? 'Не удалось отправить код в WhatsApp.'
+          : 'Не удалось отправить SMS.';
+
       return NextResponse.json(
         {
           ok: false,
           error: 'send_failed',
-          // У шлюза сообщения понятные людям ("отсканируйте QR"), их можно показать
-          message:
-            provider === 'whatsapp'
-              ? result.detail ?? 'Не удалось отправить код в WhatsApp.'
-              : 'Не удалось отправить SMS.',
+          provider,
+          // Показываем причину от провайдера: без неё ошибку невозможно исправить
+          // (например, Twilio 21608 — номер не подтверждён в пробном аккаунте)
+          message: result.detail ? `${fallback} ${trimDetail(result.detail)}` : fallback,
         },
         { status: 502 },
       );

@@ -42,6 +42,8 @@ yarn-error.log*
 # WhatsApp-шлюз: сессия и зависимости
 /whatsapp-server/auth/
 /whatsapp-server/node_modules/
+# скачанный cloudflared.exe для публичного туннеля
+/whatsapp-server/.bin/
 
 # typescript
 *.tsbuildinfo

@@ -120,9 +120,20 @@ journalctl -u jerdesh-wa -f   # здесь появится QR
 https://scanners-met-antarctica-karaoke.trycloudflare.com
 ```
 
-Этот адрес и есть `WHATSAPP_GATEWAY_URL`. Важно: при каждом запуске туннеля
-адрес **новый**, поэтому после перезапуска обновите переменную в Vercel
-и сделайте Redeploy. Пока окно скрипта открыто — шлюз доступен.
+При каждом запуске туннеля адрес **новый**. Чтобы не вписывать его в Vercel
+руками, шлюз публикует адрес в Supabase:
+
+1. выполните один раз `supabase/gateway-config.sql` в SQL Editor;
+2. впишите в `.env` рядом с этим README:
+
+   ```env
+   SUPABASE_URL=https://ваш-проект.supabase.co
+   SUPABASE_SERVICE_ROLE_KEY=ваш-service-role-ключ
+   ```
+
+После этого сайт берёт адрес из таблицы `gateway_config` при каждой отправке
+кода — пересборка Vercel не нужна. Если ключей нет, остаётся старый способ:
+адрес лежит в `gateway-url.txt` и его надо вписать в `WHATSAPP_GATEWAY_URL`.
 
 Альтернатива с постоянным адресом — платный Render/Railway/VPS (см. выше).
 

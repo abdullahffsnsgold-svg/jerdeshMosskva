@@ -6,11 +6,15 @@ import { NextResponse } from 'next/server';
  * Почему только WhatsApp: код уходит с личного номера владельца сайта
  * (whatsapp-server/, привязка по QR), поэтому SMS-провайдеры не нужны.
  *
- * Переменные окружения:
- *   WHATSAPP_GATEWAY_URL     адрес шлюза, например https://xxx.onrender.com
- *   WHATSAPP_GATEWAY_SECRET  тот же WHATSAPP_API_SECRET, что у шлюза
+ * Откуда берётся адрес шлюза:
+ *   1) таблица public.gateway_config — шлюз записывает туда свой адрес при старте,
+ *      поэтому после перезагрузки компьютера туннель получает новый адрес,
+ *      а сайт подхватывает его сам, без правки переменных и пересборки;
+ *   2) переменная WHATSAPP_GATEWAY_URL — если в базе записи ещё нет.
  *
- * В dev без этих переменных код печатается в консоль сервера, в production
+ * WHATSAPP_GATEWAY_SECRET — тот же WHATSAPP_API_SECRET, что у шлюза.
+ *
+ * В dev без шлюза код печатается в консоль сервера, в production
  * маршрут отвечает 503: отправлять некуда.
  */
 
@@ -57,9 +61,57 @@ function isRateLimited(phone: string): boolean {
   return false;
 }
 
-async function sendViaWhatsApp(to: string, code: string): Promise<SendResult> {
-  const baseUrl = (process.env.WHATSAPP_GATEWAY_URL as string).replace(/\/+$/, '');
+/** Адрес шлюза из базы кэшируем: код не должен ходить в Supabase на каждый запрос. */
+const GATEWAY_CACHE_MS = 60_000;
+let gatewayCache: { url: string; at: number } | null = null;
 
+async function gatewayUrlFromDb(): Promise<string | null> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !anonKey) return null;
+
+  try {
+    const response = await fetch(
+      `${supabaseUrl}/rest/v1/gateway_config?select=gateway_url&limit=1`,
+      {
+        headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` },
+        signal: AbortSignal.timeout(5000),
+        cache: 'no-store',
+      },
+    );
+
+    if (!response.ok) return null;
+
+    const rows = (await response.json()) as { gateway_url?: unknown }[];
+    const value = rows?.[0]?.gateway_url;
+
+    return typeof value === 'string' && /^https?:\/\//.test(value) ? value : null;
+  } catch {
+    // База недоступна — не ломаем отправку, ниже есть запасной вариант
+    return null;
+  }
+}
+
+async function resolveGatewayUrl(): Promise<string | null> {
+  const now = Date.now();
+
+  if (gatewayCache && now - gatewayCache.at < GATEWAY_CACHE_MS) return gatewayCache.url;
+
+  const fromDb = await gatewayUrlFromDb();
+  const fromEnv = process.env.WHATSAPP_GATEWAY_URL?.trim() || null;
+  const url = (fromDb ?? fromEnv)?.replace(/\/+$/, '') ?? null;
+
+  if (url) gatewayCache = { url, at: now };
+
+  return url;
+}
+
+async function sendViaWhatsApp(
+  baseUrl: string,
+  to: string,
+  code: string,
+): Promise<SendResult> {
   let response: Response;
 
   try {
@@ -74,7 +126,10 @@ async function sendViaWhatsApp(to: string, code: string): Promise<SendResult> {
       signal: AbortSignal.timeout(20_000),
     });
   } catch (error) {
-    // Самая частая причина: шлюз не запущен или адрес устарел после перезапуска
+    // Адрес мог устареть (компьютер перезагрузили) — сбрасываем кэш,
+    // чтобы следующий запрос взял свежий адрес из базы
+    gatewayCache = null;
+
     const reason = error instanceof Error ? error.message : String(error);
     return {
       ok: false,
@@ -130,9 +185,8 @@ export async function POST(request: Request) {
     ? incomingCode
     : Math.floor(100000 + Math.random() * 900000).toString();
 
-  const gatewayReady = Boolean(
-    process.env.WHATSAPP_GATEWAY_URL && process.env.WHATSAPP_GATEWAY_SECRET,
-  );
+  const gatewayUrl = await resolveGatewayUrl();
+  const gatewayReady = Boolean(gatewayUrl && process.env.WHATSAPP_GATEWAY_SECRET);
 
   if (!gatewayReady) {
     if (process.env.NODE_ENV === 'production') {
@@ -141,7 +195,7 @@ export async function POST(request: Request) {
           ok: false,
           error: 'provider_not_configured',
           message:
-            'Отправка кодов не настроена: добавьте WHATSAPP_GATEWAY_URL и WHATSAPP_GATEWAY_SECRET на Vercel.',
+            'Отправка кодов не настроена: не найден адрес WhatsApp-шлюза. Проверьте таблицу gateway_config в Supabase и переменную WHATSAPP_GATEWAY_SECRET на Vercel.',
         },
         { status: 503 },
       );
@@ -153,7 +207,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await sendViaWhatsApp(phone, code);
+    const result = await sendViaWhatsApp(gatewayUrl as string, phone, code);
 
     if (!result.ok) {
       console.error('[send-code] шлюз отказал', phone.slice(-4), result.detail);

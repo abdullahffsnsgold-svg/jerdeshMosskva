@@ -18,6 +18,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { loadDotEnv } from './env.js';
+import { publishGatewayUrl } from './publish.js';
 
 loadDotEnv();
 
@@ -37,51 +38,6 @@ function log(line) {
     appendFileSync(LOG_FILE, `${text}\n`);
   } catch {
     // лог — удобство, а не условие работы
-  }
-}
-
-/**
- * Сохраняет адрес туннеля в Supabase, чтобы сайт брал его оттуда.
- * Иначе после каждой перезагрузки адрес пришлось бы вписывать в Vercel вручную.
- * Пишем service-role ключом: он лежит только в локальном .env и в браузер не попадает.
- */
-async function publishGatewayUrl(url) {
-  const base = process.env.SUPABASE_URL?.replace(/\/+$/, '');
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!base || !key) {
-    log(
-      'Адрес не опубликован в Supabase: в whatsapp-server/.env нет SUPABASE_URL / ' +
-        'SUPABASE_SERVICE_ROLE_KEY. Впишите адрес в Vercel вручную.',
-    );
-    return false;
-  }
-
-  try {
-    const response = await fetch(`${base}/rest/v1/gateway_config`, {
-      method: 'POST',
-      headers: {
-        apikey: key,
-        Authorization: `Bearer ${key}`,
-        'Content-Type': 'application/json',
-        // Одна строка: вставляем или обновляем её
-        Prefer: 'resolution=merge-duplicates,return=minimal',
-      },
-      body: JSON.stringify({ id: 1, gateway_url: url, updated_at: new Date().toISOString() }),
-      signal: AbortSignal.timeout(10_000),
-    });
-
-    if (!response.ok) {
-      const text = await response.text();
-      log(`Supabase отклонил адрес (${response.status}): ${text.slice(0, 200)}`);
-      return false;
-    }
-
-    log('Адрес сохранён в Supabase — сайт подхватит его сам, Vercel трогать не нужно.');
-    return true;
-  } catch (error) {
-    log(`Не удалось записать адрес в Supabase: ${error instanceof Error ? error.message : error}`);
-    return false;
   }
 }
 
@@ -181,7 +137,7 @@ async function main() {
         urlFound = true;
         writeFileSync(URL_FILE, `${match[0]}\n`);
         log(`Публичный адрес: ${match[0]}`);
-        void publishGatewayUrl(match[0]);
+        void publishGatewayUrl(match[0], log);
       }
     }
   };
